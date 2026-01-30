@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Evaluación de los Aprendizajes — Cartas Interactivas</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111b2e;
+      --card2:#0f1930;
+      --text:#eaf0ff;
+      --muted:#b8c4e6;
+      --accent:#7aa2ff;
+      --accent2:#5ef0c6;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      background: radial-gradient(1200px 800px at 15% 10%, rgba(122,162,255,.25), transparent 60%),
+                  radial-gradient(1200px 800px at 85% 15%, rgba(94,240,198,.18), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{
+      width:min(1100px, 100%);
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    .title{
+      line-height:1.1;
+    }
+    .title h1{
+      margin:0;
+      font-size: clamp(22px, 3.2vw, 34px);
+      letter-spacing:.2px;
+    }
+    .title p{
+      margin:8px 0 0;
+      color:var(--muted);
+      max-width:70ch;
+      font-size: 14px;
+    }
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: none;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      font-weight:600;
+      font-size: 13px;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(122,162,255,.45);
+      background: linear-gradient(180deg, rgba(122,162,255,.22), rgba(122,162,255,.10));
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:16px;
+    }
+    .card{
+      grid-column: span 4;
+      perspective: 1200px;
+      height: 240px;
+      min-width: 0;
+    }
+    @media (max-width: 980px){
+      .card{ grid-column: span 6; }
+    }
+    @media (max-width: 640px){
+      header{ flex-direction:column; align-items:flex-start; }
+      .controls{ justify-content:flex-start; }
+      .card{ grid-column: span 12; height: 220px; }
+    }
+
+    .flip{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform-style: preserve-3d;
+      transition: transform .6s cubic-bezier(.2,.8,.2,1);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    .card[data-flipped="true"] .flip{ transform: rotateY(180deg); }
+
+    .face{
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      backface-visibility: hidden;
+      padding:18px 18px 14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:hidden;
+    }
+    .front{
+      background:
+        radial-gradient(700px 350px at 15% 15%, rgba(122,162,255,.25), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    }
+    .back{
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(700px 350px at 85% 15%, rgba(94,240,198,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      width:fit-content;
+      padding:6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-weight:700;
+      letter-spacing:.3px;
+      font-size: 12px;
+    }
+    .tag .dot{
+      width:9px; height:9px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(122,162,255,.18);
+    }
+    .back .tag .dot{ background: var(--accent2); box-shadow: 0 0 0 3px rgba(94,240,198,.16); }
+
+    h2{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .hint{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+    }
+    .content{
+      margin-top: 4px;
+      color: var(--text);
+      font-size: 13.5px;
+      line-height:1.4;
+      overflow:auto;
+      padding-right: 6px;
+    }
+    .content ul{
+      margin: 8px 0 0 18px;
+      padding:0;
+    }
+    .content li{ margin: 5px 0; }
+    .footer{
+      margin-top:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .kbd{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      padding:3px 8px;
+      border-radius: 10px;
+      font-weight:700;
+      color: var(--text);
+      white-space:nowrap;
+    }
+    .sr-only{
+      position:absolute;
+      width:1px; height:1px;
+      padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0);
+      border:0;
+    }
+    a{ color: inherit; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Evaluación de los Aprendizajes — Cartas Interactivas</h1>
+        <p>
+          Haz clic (o presiona <b>Enter</b>) sobre una carta para voltearla.
+          Atajos: <span class="kbd">F</span> voltear todas, <span class="kbd">R</span> reiniciar.
+        </p>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="flipAll">Voltear todas (F)</button>
+        <button class="btn" id="reset">Reiniciar (R)</button>
+      </div>
+    </header>
+
+    <main class="grid" id="deck" aria-label="Cartas interactivas sobre evaluación de los aprendizajes">
+      <!-- 1 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Concepto</span>
+            <h2>¿Medir o evaluar?</h2>
+            <p class="hint">Volteá la carta para ver la diferencia.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 1</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Diferencia clave</h2>
+            <div class="content">
+              <ul>
+                <li><b>Medir:</b> usa una escala cuantitativa (números, puntajes, notas).</li>
+                <li><b>Evaluar:</b> considera el <b>resultado</b> y también el <b>proceso</b> que llevó a ese resultado.</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Evaluar = integral</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Importancia</span>
+            <h2>¿Para qué sirve evaluar?</h2>
+            <p class="hint">Volteá para ver por qué es clave en educación.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 2</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Mejora el aprendizaje</h2>
+            <div class="content">
+              <ul>
+                <li>Ayuda a <b>mejorar</b> el proceso de aprendizaje.</li>
+                <li>Permite <b>identificar logros</b> y necesidades.</li>
+                <li>Promueve <b>autorreflexión</b> docente y estudiantil.</li>
+                <li>Fortalece la <b>calidad educativa</b>.</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Evaluación = mejora continua</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Conceptos clave</span>
+            <h2>Fundamentos</h2>
+            <p class="hint">Volteá para ver definiciones esenciales.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 3</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Definiciones</h2>
+            <div class="content">
+              <ul>
+                <li><b>Evaluación:</b> proceso sistemático, continuo y ético para recopilar info, emitir juicios y decidir.</li>
+                <li><b>Medición:</b> cuantificación de resultados (generalmente numéricos).</li>
+                <li><b>Valoración:</b> interpretación cualitativa de los datos.</li>
+                <li><b>Retroalimentación:</b> comunicación de resultados para mejorar desempeño.</li>
+                <li><b>Juicio valorativo:</b> interpretación de resultados obtenidos.</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Datos + interpretación</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Tipos</span>
+            <h2>Evaluación diagnóstica</h2>
+            <p class="hint">¿Cuándo se aplica y para qué sirve?</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 4</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Diagnóstica</h2>
+            <div class="content">
+              <ul>
+                <li>Se aplica <b>al inicio</b>.</li>
+                <li>Identifica <b>conocimientos previos</b>.</li>
+                <li>Orienta la <b>planificación</b> de la enseñanza.</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Punto de partida</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Tipos</span>
+            <h2>Evaluación formativa</h2>
+            <p class="hint">Volteá para ver su función durante el proceso.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 5</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Formativa</h2>
+            <div class="content">
+              <ul>
+                <li>Acompaña <b>todo el proceso</b>.</li>
+                <li>Da <b>retroalimentación continua</b>.</li>
+                <li>Favorece el <b>aprendizaje</b> y ajustes en la enseñanza.</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Evaluar para mejorar</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Tipos</span>
+            <h2>Evaluación sumativa</h2>
+            <p class="hint">Volteá para ver cómo cierra el proceso.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 6</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Sumativa</h2>
+            <div class="content">
+              <ul>
+                <li>Se aplica <b>al final</b>.</li>
+                <li>Valora <b>resultados</b> obtenidos.</li>
+                <li>Tiene carácter <b>calificativo</b> (nota).</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Cierre y calificación</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Instrumentos</span>
+            <h2>¿Cómo se evalúa?</h2>
+            <p class="hint">Volteá para ver técnicas e instrumentos.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 7</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Técnicas e instrumentos</h2>
+            <div class="content">
+              <ul>
+                <li>Pruebas escritas</li>
+                <li>Listas de cotejo</li>
+                <li>Rúbricas</li>
+                <li>Observación</li>
+                <li>Proyectos</li>
+              </ul>
+            </div>
+            <div class="footer">
+              <span>Elegir según objetivo</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8 -->
+      <section class="card" tabindex="0" role="button" aria-pressed="false" data-flipped="false">
+        <div class="flip">
+          <div class="face front">
+            <span class="tag"><span class="dot"></span> Cierre</span>
+            <h2>Idea central</h2>
+            <p class="hint">Volteá para quedarte con lo más importante.</p>
+            <div class="footer">
+              <span>Click / Enter</span>
+              <span class="kbd">Carta 8</span>
+            </div>
+          </div>
+          <div class="face back">
+            <span class="tag"><span class="dot"></span> Respuesta</span>
+            <h2>Frase final</h2>
+            <div class="content">
+              <p style="margin:0;">
+                “La evaluación no solo mide resultados: <b>orienta</b>, <b>retroalimenta</b> y <b>mejora</b> el aprendizaje.”
+              </p>
+            </div>
+            <div class="footer">
+              <span>Listo ✅</span>
+              <span class="kbd">Volver</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <p class="sr-only" id="a11y-note">
+      Usa Enter o barra espaciadora para voltear una carta enfocada.
+    </p>
+  </div>
+
+  <script>
+    const deck = document.getElementById("deck");
+    const cards = Array.from(deck.querySelectorAll(".card"));
+    const flipAllBtn = document.getElementById("flipAll");
+    const resetBtn = document.getElementById("reset");
+
+    function setFlipped(card, flipped){
+      card.dataset.flipped = String(flipped);
+      card.setAttribute("aria-pressed", String(flipped));
+    }
+
+    function toggle(card){
+      const flipped = card.dataset.flipped === "true";
+      setFlipped(card, !flipped);
+    }
+
+    // Click to flip
+    cards.forEach(card => {
+      card.addEventListener("click", () => toggle(card));
+      card.addEventListener("keydown", (e) => {
+        // Enter or Space flips (accessible)
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle(card);
+        }
+      });
+    });
+
+    // Flip all / Reset
+    function flipAll(){
+      const anyUnflipped = cards.some(c => c.dataset.flipped !== "true");
+      cards.forEach(c => setFlipped(c, anyUnflipped));
+    }
+    function reset(){
+      cards.forEach(c => setFlipped(c, false));
+    }
+
+    flipAllBtn.addEventListener("click", flipAll);
+    resetBtn.addEventListener("click", reset);
+
+    // Keyboard shortcuts: F flip all, R reset
+    window.addEventListener("keydown", (e) => {
+      if (e.target && ["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName)) return;
+      if (e.key.toLowerCase() === "f") flipAll();
+      if (e.key.toLowerCase() === "r") reset();
+    });
+  </script>
+</body>
+</html>
